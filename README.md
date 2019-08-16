@@ -1,1 +1,1 @@
-# openchrom
+# OpenChrom® Community Edition
