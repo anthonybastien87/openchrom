@@ -14,13 +14,18 @@ package net.openchrom.nmr.processing.supplier.base.settings;
 
 import java.util.List;
 
+import org.eclipse.chemclipse.support.settings.StringSettingsProperty;
 import org.eclipse.chemclipse.support.settings.SystemSettings;
 import org.eclipse.chemclipse.support.settings.SystemSettingsStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import net.openchrom.nmr.processing.supplier.base.settings.support.IcoShiftAlignmentGapFillingType;
 import net.openchrom.nmr.processing.supplier.base.settings.support.IcoShiftAlignmentShiftCorrectionType;
 import net.openchrom.nmr.processing.supplier.base.settings.support.IcoShiftAlignmentTargetCalculationSelection;
 import net.openchrom.nmr.processing.supplier.base.settings.support.IcoShiftAlignmentType;
+import net.openchrom.nmr.processing.supplier.base.settings.support.IcoShiftAlignmentUtilities;
 import net.openchrom.nmr.processing.supplier.base.settings.support.IcoShiftAlignmentUtilities.Interval;
 
 /**
@@ -31,22 +36,33 @@ import net.openchrom.nmr.processing.supplier.base.settings.support.IcoShiftAlign
  */
 @SystemSettings(SystemSettingsStrategy.NEW_INSTANCE)
 public class IcoShiftAlignmentSettings {
-
-	private IcoShiftAlignmentTargetCalculationSelection targetCalculationSelection = IcoShiftAlignmentTargetCalculationSelection.MEAN;
-	private IcoShiftAlignmentShiftCorrectionType shiftCorrectionType = IcoShiftAlignmentShiftCorrectionType.FAST;
-	private int shiftCorrectionTypeValue = 55;
-	private IcoShiftAlignmentGapFillingType gapFillingType = IcoShiftAlignmentGapFillingType.MARGIN;
-	private IcoShiftAlignmentType alignmentType = IcoShiftAlignmentType.WHOLE_SPECTRUM;
-	private double singlePeakLowerBorder = 2.21;
-	private double singlePeakHigherBorder = 2.41;
-	private int numberOfIntervals = 120;
-	private int intervalLength = 1000;
-	private List<Interval<Double>> userDefIntervalRegions;
+	@JsonProperty("Perform preliminary CoShifting")
 	private boolean preliminaryCoShifting;
+	@JsonProperty("Calculated target function")
+	private IcoShiftAlignmentTargetCalculationSelection targetCalculationSelection = IcoShiftAlignmentTargetCalculationSelection.MEAN;
+	@JsonProperty("Shift correction type")
+	private IcoShiftAlignmentShiftCorrectionType shiftCorrectionType = IcoShiftAlignmentShiftCorrectionType.FAST;
+	@JsonProperty("User defined shift correction type value")
+	private int shiftCorrectionTypeValue = 55;
+	@JsonProperty("Gap filling type")
+	private IcoShiftAlignmentGapFillingType gapFillingType = IcoShiftAlignmentGapFillingType.MARGIN;
+	@JsonProperty("Alignment type")
+	private IcoShiftAlignmentType alignmentType = IcoShiftAlignmentType.WHOLE_SPECTRUM;
+	@JsonProperty("Single peak border (rigth)")
+	private double singlePeakLowerBorder = 2.21;
+	@JsonProperty("Single peak border (left)")
+	private double singlePeakHigherBorder = 2.41;
+	@JsonProperty("No. of intervals")
+	private int numberOfIntervals = 120;
+	@JsonProperty("Length of intervals")
+	private int intervalLength = 1000;
+	@StringSettingsProperty(regExp = "(\\d*\\.\\d+)-(\\d*\\.\\d+)", isMultiLine = true)
+	@JsonProperty("User defined regions [ppm] \ne.g.\n5.1-5.25\n2.985-3.5 ")
+	private String userDefinedIntervalRegions = "5.2-5.5\n4.1-4.4\n2.25-2.4\n1.9-2.1\n1.2-1.4";
 
 	/**
-	 * getTargetCalculationSelection returns a calculated target vector that
-	 * can be of MEAN, MEDIAN, or MAX value type.
+	 * getTargetCalculationSelection returns a calculated target vector that can be
+	 * of MEAN, MEDIAN, or MAX value type.
 	 *
 	 * @param getTargetCalculationSelection
 	 */
@@ -68,8 +84,8 @@ public class IcoShiftAlignmentSettings {
 
 	/**
 	 * getShiftCorrectionType returns the shift correction type that is used to
-	 * define the way the shift correction value is calculated. Possible ways
-	 * are FAST, BEST, or USER_DEFINED.
+	 * define the way the shift correction value is calculated. Possible ways are
+	 * FAST, BEST, or USER_DEFINED.
 	 *
 	 * @param getShiftCorrectionType
 	 */
@@ -112,10 +128,10 @@ public class IcoShiftAlignmentSettings {
 	}
 
 	/**
-	 * getAlignmentType returns the method how the alignment is executed, i.e.
-	 * it reflects the type and amount of intervals for the alignment.
-	 * Possible methods are SINGLE_PEAK, WHOLE_SPECTRUM, NUMBER_OF_INTERVALS,
-	 * INTERVAL_LENGTH, or USER_DEFINED_INTERVALS
+	 * getAlignmentType returns the method how the alignment is executed, i.e. it
+	 * reflects the type and amount of intervals for the alignment. Possible methods
+	 * are SINGLE_PEAK, WHOLE_SPECTRUM, NUMBER_OF_INTERVALS, INTERVAL_LENGTH, or
+	 * USER_DEFINED_INTERVALS
 	 *
 	 * @param getAlignmentType
 	 */
@@ -125,9 +141,9 @@ public class IcoShiftAlignmentSettings {
 	}
 
 	/**
-	 * setAlignmentType defines the method how the alignment is executed, i.e.
-	 * it defines the type and amount of intervals for the alignment.
-	 * Possible selections are SINGLE_PEAK, WHOLE_SPECTRUM, NUMBER_OF_INTERVALS,
+	 * setAlignmentType defines the method how the alignment is executed, i.e. it
+	 * defines the type and amount of intervals for the alignment. Possible
+	 * selections are SINGLE_PEAK, WHOLE_SPECTRUM, NUMBER_OF_INTERVALS,
 	 * INTERVAL_LENGTH, or USER_DEFINED_INTERVALS
 	 *
 	 * @param setAlignmentType
@@ -150,9 +166,9 @@ public class IcoShiftAlignmentSettings {
 
 	/**
 	 * setSinglePeakLowerBorder defines the lower double value (ppm) for the
-	 * selection IcoShiftAlignmentType.SINGLE_PEAK. The value can be positive
-	 * or negative and should be in the range of the chemical shift axis.
-	 * The value should not be greater than {@link singlePeakHigherBorder}.
+	 * selection IcoShiftAlignmentType.SINGLE_PEAK. The value can be positive or
+	 * negative and should be in the range of the chemical shift axis. The value
+	 * should not be greater than {@link singlePeakHigherBorder}.
 	 *
 	 * @param setSinglePeakLowerBorder
 	 */
@@ -174,9 +190,9 @@ public class IcoShiftAlignmentSettings {
 
 	/**
 	 * setSinglePeakHigherBorder defines the higher double value (ppm) for the
-	 * selection IcoShiftAlignmentType.SINGLE_PEAK. The value can be positive
-	 * or negative and should be in the range of the chemical shift axis.
-	 * The value should be greater than {@link singlePeakLowerBorder}.
+	 * selection IcoShiftAlignmentType.SINGLE_PEAK. The value can be positive or
+	 * negative and should be in the range of the chemical shift axis. The value
+	 * should be greater than {@link singlePeakLowerBorder}.
 	 *
 	 * @param setSinglePeakHigherBorder
 	 */
@@ -198,8 +214,8 @@ public class IcoShiftAlignmentSettings {
 
 	/**
 	 * setIntervalLength defines the length of an interval for the selection
-	 * IcoShiftAlignmentType.INTERVAL_LENGTH needed for calculation. Input is
-	 * an integer value between 100 and 10000 data points.
+	 * IcoShiftAlignmentType.INTERVAL_LENGTH needed for calculation. Input is an
+	 * integer value between 100 and 10000 data points.
 	 *
 	 * @param setIntervalLength
 	 */
@@ -209,27 +225,43 @@ public class IcoShiftAlignmentSettings {
 	}
 
 	/**
-	 * getUserDefIntervalRegions returns a map with user defined regions for
+	 * getUserDefinedIntervalRegions returns a String with user defined regions for
 	 * interval calculation.
 	 *
-	 * @param getUserDefIntervalRegions
+	 * @param getUserDefinedIntervalRegions
 	 */
-	public List<Interval<Double>> getUserDefIntervalRegions() {
 
-		return userDefIntervalRegions;
+	public String getUserDefinedIntervalRegions() {
+
+		return userDefinedIntervalRegions;
 	}
 
 	/**
-	 * setUserDefIntervalRegions defines a map with user defined regions for
-	 * interval calculation.
-	 * Each value pair is inserted as new ChemicalShiftInterval(hV, lV),
+	 * setUserDefinedIntervalRegions defines a String with user defined regions for
+	 * interval calculation. Each interval is inserted as new value pair hV-lV,
 	 * where hV is the higher value and lV is the lower value of the pair.
 	 *
-	 * @param setUserDefIntervalRegions
+	 * @param setUserDefinedIntervalRegions
 	 */
-	public void setUserDefIntervalRegions(List<Interval<Double>> userDefIntervalRegions) {
 
-		this.userDefIntervalRegions = userDefIntervalRegions;
+	public void setUserDefinedIntervalRegions(String userDefinedIntervalRegions) {
+
+		this.userDefinedIntervalRegions = userDefinedIntervalRegions;
+	}
+
+	/**
+	 * getUserDefinedIntervalRegionsAsList is used to parse the input String
+	 * {@link userDefinedIntervalRegions} which holds the interval values. It
+	 * returns a List that contains multiple ChemicalShiftIntervals.<br>
+	 * Each value pair per new line is inserted as new ChemicalShiftInterval(hV,
+	 * lV), where hV is the higher value and lV is the lower value of the pair.
+	 *
+	 * @param getUserDefinedIntervalRegionsAsList
+	 */
+	@JsonIgnore
+	public List<Interval<Double>> getUserDefinedIntervalRegionsAsList() {
+
+		return IcoShiftAlignmentUtilities.parseUserDefinedIntervalRegionsToList(userDefinedIntervalRegions);
 	}
 
 	/**
@@ -245,8 +277,8 @@ public class IcoShiftAlignmentSettings {
 
 	/**
 	 * setNumberOfIntervals defines the number of intervals for the selection
-	 * IcoShiftAlignmentType.NUMBER_OF_INTERVALS needed for calculation. Input
-	 * is an integer greater than 1.
+	 * IcoShiftAlignmentType.NUMBER_OF_INTERVALS needed for calculation. Input is an
+	 * integer greater than 1.
 	 *
 	 * @param setNumberOfIntervals
 	 */
@@ -267,8 +299,8 @@ public class IcoShiftAlignmentSettings {
 	}
 
 	/**
-	 * setShiftCorrectionTypeValue defines the value needed for calculation of
-	 * the shift correction value for IcoShiftAlignmentShiftCorrectionType.USER_DEFINED
+	 * setShiftCorrectionTypeValue defines the value needed for calculation of the
+	 * shift correction value for IcoShiftAlignmentShiftCorrectionType.USER_DEFINED
 	 *
 	 * @param setShiftCorrectionTypeValue
 	 */
@@ -278,8 +310,8 @@ public class IcoShiftAlignmentSettings {
 	}
 
 	/**
-	 * isPreliminaryCoShifting returns if a preliminary Co-Shifting will be
-	 * executed before the main alignment will be carried out.
+	 * isPreliminaryCoShifting returns if a preliminary Co-Shifting will be executed
+	 * before the main alignment will be carried out.
 	 *
 	 * @param isPreliminaryCoShifting
 	 */

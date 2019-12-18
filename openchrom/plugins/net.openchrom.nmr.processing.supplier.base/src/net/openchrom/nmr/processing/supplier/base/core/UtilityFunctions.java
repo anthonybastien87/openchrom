@@ -77,12 +77,12 @@ public class UtilityFunctions {
 
 		double[] vector = new double[points];
 		for(int i = 0; i < points; i++) {
-			vector[i] = minVal + (double)i / (points - 1) * (maxVal - minVal);
+			vector[i] = minVal + (double) i / (points - 1) * (maxVal - minVal);
 		}
 		return vector;
 	}
 
-	public double getMaxValueOfArray(double[] dataArray) {
+	public static double getMaxValueOfArray(double[] dataArray) {
 
 		return Arrays.stream(dataArray).max().orElseThrow(IllegalArgumentException::new);
 	}
@@ -92,56 +92,98 @@ public class UtilityFunctions {
 		return Arrays.stream(dataArray).min().orElseThrow(IllegalArgumentException::new);
 	}
 
-	public int findIndexOfValue(double[] array, double value) {
+	public static int findIndexOfValue(double[] array, double value) {
 
 		int index;
+		double threshold = 0.001;
 		for(index = 0; index < array.length; index++) {
-			if(Math.abs(array[index] - value) < 0.001) {
+			if(Math.abs(array[index] - value) < threshold) {
 				break;
 			}
 		}
 		//
 		int reverseIndex = array.length - 1;
 		for(; reverseIndex > 0; reverseIndex--) {
-			if(Math.abs(array[reverseIndex] - value) < 0.001) {
+			if(Math.abs(array[reverseIndex] - value) < threshold) {
 				break;
 			}
 		}
 		//
 		if(Double.compare(value, 0.0) < 0) {
-			return (int)Math.floor((reverseIndex + index) / 2);
+			return (int) Math.floor((reverseIndex + index) / 2);
 		} else {
-			return (int)Math.ceil((reverseIndex + index) / 2);
+			return (int) Math.ceil((reverseIndex + index) / 2);
 		}
 	}
 
 	public static int findIndexOfValue(Number[] array, double value) {
 
 		int index;
+		double threshold = 0.001;
 		for(index = 0; index < array.length; index++) {
-			if(Math.abs(array[index].doubleValue() - value) < 0.001) {
+			if(Math.abs(array[index].doubleValue() - value) < threshold) {
 				break;
 			}
 		}
 		//
 		int reverseIndex = array.length - 1;
 		for(; reverseIndex > 0; reverseIndex--) {
-			if(Math.abs(array[reverseIndex].doubleValue() - value) < 0.001) {
+			if(Math.abs(array[reverseIndex].doubleValue() - value) < threshold) {
 				break;
 			}
 		}
 		//
 		if(Double.compare(value, 0.0) < 0) {
-			return (int)Math.floor((reverseIndex + index) / 2);
+			return (int) Math.floor((reverseIndex + index) / 2);
 		} else {
-			return (int)Math.ceil((reverseIndex + index) / 2);
+			return (int) Math.ceil((reverseIndex + index) / 2);
 		}
 	}
 
-	public void leftShiftNMRData(double[] dataArray, int pointsToShift) {
+	public static int findIndexOfValue(Number[] array, BigDecimal value) {
+
+		int index;
+		for(index = 0; index < array.length; index++) {
+			if(value.compareTo(BigDecimal.valueOf(array[index].doubleValue())) != -1) {
+				break;
+			}
+		}
+		//
+		int reverseIndex = array.length - 1;
+		for(; reverseIndex > 0; reverseIndex--) {
+			if(value.compareTo(BigDecimal.valueOf(array[reverseIndex].doubleValue())) != 1) {
+				break;
+			}
+		}
+		//
+		if(Double.compare(reverseIndex, index) == 0) {
+			return reverseIndex;
+		} else {
+			if((index - reverseIndex) > 1) {
+				Number[] partOfArray = Arrays.copyOfRange(array, reverseIndex, index);
+				double[] searchForMax = new double[partOfArray.length];
+				for(int n = 1; n < partOfArray.length; n++) {
+					searchForMax[n] = partOfArray[n].doubleValue();
+				}
+				return findIndexOfValue(array, getMaxValueOfArray(searchForMax));
+			} else {
+				double indexValue = Math.abs(array[index].doubleValue() - value.doubleValue());
+				double revIndexValue = Math.abs(array[reverseIndex].doubleValue() - value.doubleValue());
+				if(Double.compare(value.doubleValue(), 0) < 0) {
+					// values<0
+					return ((Double.compare(indexValue, revIndexValue) > 0) ? index : reverseIndex);
+				} else {
+					// values>0
+					return ((Double.compare(indexValue, revIndexValue) < 0) ? index : reverseIndex);
+				}
+			}
+		}
+	}
+
+	public static void leftShiftNMRData(double[] dataArray, int pointsToShift) {
 
 		pointsToShift = pointsToShift % dataArray.length;
-		while(pointsToShift-- > 0) {
+		while (pointsToShift-- > 0) {
 			double tempArray = dataArray[0];
 			for(int i = 1; i < dataArray.length; i++) {
 				dataArray[i - 1] = dataArray[i];
@@ -150,7 +192,7 @@ public class UtilityFunctions {
 		}
 	}
 
-	public double[] rightShiftNMRData(double[] dataArray, int pointsToShift) {
+	public static double[] rightShiftNMRData(double[] dataArray, int pointsToShift) {
 
 		for(int i = 0; i < pointsToShift; i++) {
 			double tempArray = dataArray[dataArray.length - 1];
@@ -165,7 +207,7 @@ public class UtilityFunctions {
 	public static void leftShiftNMRComplexData(Complex[] dataArray, int pointsToShift) {
 
 		pointsToShift = pointsToShift % dataArray.length;
-		while(pointsToShift-- > 0) {
+		while (pointsToShift-- > 0) {
 			Complex tempArray = dataArray[0];
 			for(int i = 1; i < dataArray.length; i++) {
 				dataArray[i - 1] = dataArray[i];
@@ -186,6 +228,16 @@ public class UtilityFunctions {
 		return dataArray;
 	}
 
+	public static boolean lengthIsPowerOfTwo(List<? extends FIDSignal> signals) {
+
+		if(signals.size() == 0) {
+			throw new IllegalArgumentException("Signals length can't be 0");
+		}
+		double divisor = Math.log(2);
+		double dividend = Math.log(signals.size());
+		return (int) (Math.ceil((dividend / divisor))) == (int) (Math.floor(((dividend / divisor))));
+	}
+
 	public static final class SpectrumData {
 
 		public Complex[] signals;
@@ -194,7 +246,7 @@ public class UtilityFunctions {
 		public final int maxIndex;
 		public final AcquisitionParameter parameter;
 
-		public SpectrumData(Complex[] array, BigDecimal[] frequency, BigDecimal[] chemicalShift, int maxIndex, AcquisitionParameter parameter) {
+		public SpectrumData(Complex[] array, BigDecimal[] frequency, BigDecimal[] chemicalShift, int maxIndex, AcquisitionParameter parameter){
 			this.signals = array;
 			this.frequency = frequency;
 			this.chemicalShift = chemicalShift;
@@ -221,7 +273,7 @@ public class UtilityFunctions {
 		public Complex[] signals;
 		public BigDecimal[] times;
 
-		public ComplexFIDData(Complex[] array, BigDecimal[] times) {
+		public ComplexFIDData(Complex[] array, BigDecimal[] times){
 			this.signals = array;
 			this.times = times;
 		}

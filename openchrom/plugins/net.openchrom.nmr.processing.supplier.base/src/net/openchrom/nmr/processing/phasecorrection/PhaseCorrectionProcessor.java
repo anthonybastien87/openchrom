@@ -12,6 +12,8 @@
  *******************************************************************************/
 package net.openchrom.nmr.processing.phasecorrection;
 
+import java.math.BigDecimal;
+
 import org.apache.commons.math3.complex.Complex;
 import org.eclipse.chemclipse.model.core.IMeasurement;
 import org.eclipse.chemclipse.model.filter.IMeasurementFilter;
@@ -29,12 +31,13 @@ import net.openchrom.nmr.processing.supplier.base.core.UtilityFunctions;
 import net.openchrom.nmr.processing.supplier.base.core.UtilityFunctions.SpectrumData;
 import net.openchrom.nmr.processing.supplier.base.settings.PhaseCorrectionSettings;
 
-@Component(service = {Filter.class, IMeasurementFilter.class})
+@Component(service = { Filter.class, IMeasurementFilter.class })
 public class PhaseCorrectionProcessor extends AbstractSpectrumSignalFilter<PhaseCorrectionSettings> {
 
+	private static final long serialVersionUID = -7732492750667076130L;
 	private static final String NAME = "Phase Correction";
 
-	public PhaseCorrectionProcessor() {
+	public PhaseCorrectionProcessor(){
 		super(PhaseCorrectionSettings.class);
 	}
 
@@ -85,47 +88,47 @@ public class PhaseCorrectionProcessor extends AbstractSpectrumSignalFilter<Phase
 		}
 		double[] leftPhaseCorrectionDSP = new double[complexSize];
 		//
-		switch(phaseCorrectionSettings.getPivotPointSelection()) {
-			case LEFT:
-				// position off the peaks
-				phasingPivotpoint = deltaAxisPPM[0].doubleValue();
-				break;
-			case MIDDLE:
-				// middle of spectrum
-				phasingPivotpoint = deltaAxisPPM[(complexSize / 2) - 1].doubleValue();
-				break;
-			case PEAK_MAX:
-				// getMaxVal; at biggest peak in spectrum
-				phasingPivotpoint = deltaAxisPPM[spectrumData.maxIndex].doubleValue();
-				break;
-			case USER_DEFINED:
-				// user input position
-				double userDefinedPosition = phaseCorrectionSettings.getUserDefinedPivotPointValue();
-				int userPeakPosition = UtilityFunctions.findIndexOfValue(deltaAxisPPM, userDefinedPosition);
-				phasingPivotpoint = deltaAxisPPM[userPeakPosition].doubleValue();
-				break;
-			case NOT_DEFINED:
-				// without setting pivot point
-				leftPhaseCorrectionDSP = UtilityFunctions.generateLinearlySpacedVector(0, 1, complexSize);
-				for(int i = 0; i < leftPhaseCorrectionDSP.length; i++) {
-					leftPhaseCorrectionDSP[i] *= dspPhaseFactor; // dspPhase
-				}
-				// generate correcti)on array
-				Complex[] phaseCorrection = new Complex[leftPhaseCorrectionDSP.length];
-				for(int i = 0; i < leftPhaseCorrectionDSP.length; i++) {
-					double phaseCorrectionFactorTerm = (rightPhaseChange + leftPhaseCorrection[i] + leftPhaseCorrectionDSP[i]);
-					phaseCorrectionComplexFactor = phaseCorrectionFactor.multiply(phaseCorrectionFactorTerm);
-					phaseCorrection[i] = phaseCorrectionComplexFactor.exp();
-				}
-				return phaseCorrection;
+		switch (phaseCorrectionSettings.getPivotPointSelection()) {
+		case LEFT:
+			// position off the peaks
+			phasingPivotpoint = deltaAxisPPM[0].doubleValue();
+			break;
+		case MIDDLE:
+			// middle of spectrum
+			phasingPivotpoint = deltaAxisPPM[(complexSize / 2) - 1].doubleValue();
+			break;
+		case PEAK_MAX:
+			// getMaxVal; at biggest peak in spectrum
+			phasingPivotpoint = deltaAxisPPM[spectrumData.maxIndex].doubleValue();
+			break;
+		case USER_DEFINED:
+			// user input position
+			BigDecimal userDefinedPosition = BigDecimal.valueOf(phaseCorrectionSettings.getUserDefinedPivotPointValue());
+			int userPeakPosition = UtilityFunctions.findIndexOfValue(deltaAxisPPM, userDefinedPosition);
+			phasingPivotpoint = deltaAxisPPM[userPeakPosition].doubleValue();
+			break;
+		case NOT_DEFINED:
+			// without setting pivot point
+			leftPhaseCorrectionDSP = UtilityFunctions.generateLinearlySpacedVector(0, 1, complexSize);
+			for(int i = 0; i < leftPhaseCorrectionDSP.length; i++) {
+				leftPhaseCorrectionDSP[i] *= dspPhaseFactor; // dspPhase
+			}
+			// generate correction array
+			Complex[] phaseCorrection = new Complex[leftPhaseCorrectionDSP.length];
+			for(int i = 0; i < leftPhaseCorrectionDSP.length; i++) {
+				double phaseCorrectionFactorTerm = (rightPhaseChange + leftPhaseCorrection[i] + leftPhaseCorrectionDSP[i]);
+				phaseCorrectionComplexFactor = phaseCorrectionFactor.multiply(phaseCorrectionFactorTerm);
+				phaseCorrection[i] = phaseCorrectionComplexFactor.exp();
+			}
+			return phaseCorrection;
 		}
 		/*
 		 * to be used later on with the GUI
 		 */
 		double phaseCorrectionTermA = (phasingPivotpoint - firstDataOffset);
 		double phaseCorrectionTermB = phaseCorrectionTermA / sweepWidth;
-		double phaseCorrectionTermC = Math.round(complexSize * phaseCorrectionTermB);
-		double rightPhaseCorrectionleftPhase = -(leftPhaseCorrection[(int)phaseCorrectionTermC]);
+		int pivotIndex = ((int) Math.floor(complexSize * phaseCorrectionTermB)) - 1;
+		double rightPhaseCorrectionleftPhase = -(leftPhaseCorrection[pivotIndex]);
 		rightPhaseChange += rightPhaseCorrectionleftPhase;
 		// generate correction array
 		Complex[] phaseCorrection = new Complex[leftPhaseCorrectionDSP.length];
