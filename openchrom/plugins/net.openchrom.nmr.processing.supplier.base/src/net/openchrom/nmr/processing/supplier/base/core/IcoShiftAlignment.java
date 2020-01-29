@@ -277,7 +277,7 @@ public class IcoShiftAlignment implements IMeasurementFilter<IcoShiftAlignmentSe
 		double[] columnArray = new double[numColsMax];
 		for(int c = 0; c < numColsMax; c++) {
 			// calculate and evaluate median for each column
-			double[] columnVector = experimentalDatasetsMatrix.extractVector(false, c).getMatrix().getData();
+			double[] columnVector = IcoShiftAlignmentUtilities.extractVectorFromMatrix(experimentalDatasetsMatrix, false, c);
 			columnArray[c] = median.evaluate(columnVector);
 		}
 		return columnArray;
@@ -292,7 +292,7 @@ public class IcoShiftAlignment implements IMeasurementFilter<IcoShiftAlignmentSe
 		}
 		double maxRowValue = UtilityFunctions.getMaxValueOfArray(rowArraySum);
 		int maxTargetIndex = UtilityFunctions.findIndexOfValue(rowArraySum, maxRowValue);
-		double[] maxTarget = experimentalDatasetsMatrix.extractVector(true, maxTargetIndex).getMatrix().getData();
+		double[] maxTarget = IcoShiftAlignmentUtilities.extractVectorFromMatrix(experimentalDatasetsMatrix, true, maxTargetIndex);
 		return maxTarget;
 	}
 
@@ -336,8 +336,8 @@ public class IcoShiftAlignment implements IMeasurementFilter<IcoShiftAlignmentSe
 			 */
 			double lowerBorder = settings.getSinglePeakLowerBorder();
 			double higherBorder = settings.getSinglePeakHigherBorder();
-			int lowerBorderIndex = UtilityFunctions.findIndexOfValue(chemicalShiftAxis, lowerBorder);
-			int higherBorderIndex = UtilityFunctions.findIndexOfValue(chemicalShiftAxis, higherBorder);
+			int lowerBorderIndex = UtilityFunctions.findIndexOfValue(chemicalShiftAxis, BigDecimal.valueOf(lowerBorder));
+			int higherBorderIndex = UtilityFunctions.findIndexOfValue(chemicalShiftAxis, BigDecimal.valueOf(higherBorder));
 			intervalRegionsMap.put(1, new Interval<Integer>(lowerBorderIndex, higherBorderIndex));
 			break;
 		case WHOLE_SPECTRUM:
@@ -625,7 +625,7 @@ public class IcoShiftAlignment implements IMeasurementFilter<IcoShiftAlignmentSe
 		//
 		for(int r = 0; r < fouriertransformedDatasetCrossCorrelated.numRows(); r++) {
 			//
-			double[] shiftArray = fouriertransformedDatasetCrossCorrelated.extractVector(true, r).getMatrix().getData();
+			double[] shiftArray = IcoShiftAlignmentUtilities.extractVectorFromMatrix(fouriertransformedDatasetCrossCorrelated, true, r);
 			double[] shiftedArray = new double[shiftArray.length]; // initialize with zero
 			int end = fouriertransformedDatasetCrossCorrelated.numCols() - 1;
 			double[] rowMarginValues = { fouriertransformedDatasetCrossCorrelated.get(r, 0), fouriertransformedDatasetCrossCorrelated.get(r, end) };
@@ -719,7 +719,7 @@ public class IcoShiftAlignment implements IMeasurementFilter<IcoShiftAlignmentSe
 		double[] searchArray = null;
 		IcoShiftAlignmentShiftCorrectionType shiftCorrectionType = settings.getShiftCorrectionType();
 		for(int r = 0; r < fouriertransformedDatasetCrossCorrelated.numRows(); r++) {
-			double[] shiftArray = fouriertransformedDatasetCrossCorrelated.extractVector(true, r).getMatrix().getData();
+			double[] shiftArray = IcoShiftAlignmentUtilities.extractVectorFromMatrix(fouriertransformedDatasetCrossCorrelated, true, r);
 			// circular shift
 			fouriertransformedDatasetCrossCorrelated.setRow(r, 0, UtilityFunctions.rightShiftNMRData(shiftArray, shiftArray.length / 2));
 			searchArray = shiftArray;
@@ -728,6 +728,10 @@ public class IcoShiftAlignment implements IMeasurementFilter<IcoShiftAlignmentSe
 				// cut out central part of observed shiftArray
 				int copyOfRangeFrom = (shiftArray.length / 2) - shiftCorrectionTypeValue - 1;
 				int copyOfRangeTo = (shiftArray.length / 2) + shiftCorrectionTypeValue;
+				if(Double.compare(copyOfRangeFrom, 0) < 0) {
+					copyOfRangeTo = copyOfRangeTo + (2 * copyOfRangeFrom);
+					copyOfRangeFrom = Math.abs(copyOfRangeFrom);
+				}
 				searchArray = Arrays.copyOfRange(shiftArray, copyOfRangeFrom, copyOfRangeTo);
 			}
 			// find max. peak positions
@@ -774,7 +778,7 @@ public class IcoShiftAlignment implements IMeasurementFilter<IcoShiftAlignmentSe
 		SimpleMatrix fouriertransformedDatasetCrossCorrelated = new SimpleMatrix(rows, newDataSize);
 		for(int r = 0; r < experimentalDatasetForFFTzf.numRows(); r++) {
 			// FFT and calculations
-			double[] arrayForFFT = experimentalDatasetForFFTzf.extractVector(true, r).getMatrix().getData();
+			double[] arrayForFFT = IcoShiftAlignmentUtilities.extractVectorFromMatrix(experimentalDatasetForFFTzf, true, r);
 			Complex[] fouriertransformedArray = fFourierTransformer.transform(arrayForFFT, TransformType.FORWARD);
 			for(int m = 0; m < fouriertransformedArray.length; m++) {
 				fouriertransformedArray[m] = fouriertransformedArray[m].multiply(fouriertransformedTarget[m]);

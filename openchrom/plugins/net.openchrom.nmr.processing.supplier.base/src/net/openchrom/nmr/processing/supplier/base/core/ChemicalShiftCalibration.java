@@ -159,7 +159,7 @@ public class ChemicalShiftCalibration implements IMeasurementFilter<ChemicalShif
 	private static boolean checkCalibration(SimpleMatrix calibratedData, BigDecimal[] chemicalShiftAxis, IcoShiftAlignmentSettings alignmentSettings) {
 
 		Interval<Integer> intervalIndices = ChemicalShiftCalibrationUtilities.getCalibrationIntervalIndices(chemicalShiftAxis, alignmentSettings);
-		int intendedPosition = ChemicalShiftCalibrationUtilities.getIntendedPeakPosition(intervalIndices, chemicalShiftAxis);
+		int intendedPosition = ChemicalShiftCalibrationUtilities.getIntendedPeakPosition(intervalIndices, chemicalShiftAxis, alignmentSettings);
 		int[] actualPositions = ChemicalShiftCalibrationUtilities.getActualPeakPositions(intervalIndices, calibratedData);
 		return ChemicalShiftCalibrationUtilities.isSamePeakPosition(actualPositions, intendedPosition);
 	}
@@ -170,7 +170,7 @@ public class ChemicalShiftCalibration implements IMeasurementFilter<ChemicalShif
 		int r = 0;
 		for(SpectrumMeasurement measurementNMR : experimentalDatasetsList) {
 			SpectrumData complexSpectrumData = UtilityFunctions.toComplexSpectrumData(measurementNMR);
-			double[] rowVector = calibratedData.extractVector(true, r).getMatrix().getData();
+			double[] rowVector = IcoShiftAlignmentUtilities.extractVectorFromMatrix(calibratedData, true, r);
 			r++;
 			List<ComplexSpectrumSignal> newSignals = new ArrayList<>();
 			for(int c = 0; c < rowVector.length; c++) {
@@ -186,11 +186,11 @@ public class ChemicalShiftCalibration implements IMeasurementFilter<ChemicalShif
 	private static SimpleMatrix finalPeakCalibration(SimpleMatrix calibratedData, BigDecimal[] chemicalShiftAxis, IcoShiftAlignmentSettings alignmentSettings) {
 
 		Interval<Integer> intervalIndices = ChemicalShiftCalibrationUtilities.getCalibrationIntervalIndices(chemicalShiftAxis, alignmentSettings);
-		int intendedPosition = ChemicalShiftCalibrationUtilities.getIntendedPeakPosition(intervalIndices, chemicalShiftAxis);
+		int intendedPosition = ChemicalShiftCalibrationUtilities.getIntendedPeakPosition(intervalIndices, chemicalShiftAxis, alignmentSettings);
 		int[] actualPositions = ChemicalShiftCalibrationUtilities.getActualPeakPositions(intervalIndices, calibratedData);
 		// try to correct the remaining discrepancy
 		for(int i = 0; i < actualPositions.length; i++) {
-			double[] shiftVector = calibratedData.extractVector(true, i).getMatrix().getData();
+			double[] shiftVector = IcoShiftAlignmentUtilities.extractVectorFromMatrix(calibratedData, true, i);
 			//
 			if(actualPositions[i] > intendedPosition) {
 				// leftShift
@@ -237,8 +237,9 @@ public class ChemicalShiftCalibration implements IMeasurementFilter<ChemicalShif
 		 * 0.05 to -0.05 ppm. A larger range means that impurities or other peaks could
 		 * be misused for calibration.
 		 */
-		alignmentSettings.setSinglePeakLowerBorder(calibrationSettings.getRangeAroundCalibrationSignal() / 2);
-		alignmentSettings.setSinglePeakHigherBorder(-calibrationSettings.getRangeAroundCalibrationSignal() / 2);
+		double deviation = calibrationSettings.getRangeAroundCalibrationSignal() / 2;
+		alignmentSettings.setSinglePeakLowerBorder(calibrationSettings.getLocationOfCauchyDistribution() + deviation);
+		alignmentSettings.setSinglePeakHigherBorder(calibrationSettings.getLocationOfCauchyDistribution() - deviation);
 		//
 		alignmentSettings.setGapFillingType(IcoShiftAlignmentGapFillingType.MARGIN);
 		return alignmentSettings;
