@@ -47,11 +47,11 @@ import org.eclipse.core.runtime.IProgressMonitor;
 
 import net.openchrom.xxd.process.supplier.templates.preferences.PreferenceSupplier;
 import net.openchrom.xxd.process.supplier.templates.settings.PeakDetectorSettings;
-import net.openchrom.xxd.process.supplier.templates.settings.PeakTransferSettings;
+import net.openchrom.xxd.process.supplier.templates.settings.PeakTransferTemplateSettings;
 import net.openchrom.xxd.process.supplier.templates.support.PeakSupport;
 
 @SuppressWarnings("rawtypes")
-public class PeakTransfer extends AbstractPeakDetector implements IPeakDetectorMSD, IPeakDetectorCSD {
+public class PeakTransferTemplate extends AbstractPeakDetector implements IPeakDetectorMSD, IPeakDetectorCSD {
 
 	@Override
 	public IProcessingInfo detect(IChromatogramSelectionMSD chromatogramSelection, IPeakDetectorSettingsMSD settings, IProgressMonitor monitor) {
@@ -62,7 +62,7 @@ public class PeakTransfer extends AbstractPeakDetector implements IPeakDetectorM
 	@Override
 	public IProcessingInfo detect(IChromatogramSelectionMSD chromatogramSelection, IProgressMonitor monitor) {
 
-		PeakTransferSettings settings = getSettings();
+		PeakTransferTemplateSettings settings = getSettings();
 		return detect(chromatogramSelection, settings, monitor);
 	}
 
@@ -75,13 +75,13 @@ public class PeakTransfer extends AbstractPeakDetector implements IPeakDetectorM
 	@Override
 	public IProcessingInfo detect(IChromatogramSelectionCSD chromatogramSelection, IProgressMonitor monitor) {
 
-		PeakTransferSettings settings = getSettings();
+		PeakTransferTemplateSettings settings = getSettings();
 		return detect(chromatogramSelection, settings, monitor);
 	}
 
-	private PeakTransferSettings getSettings() {
+	private PeakTransferTemplateSettings getSettings() {
 
-		PeakTransferSettings settings = new PeakTransferSettings();
+		PeakTransferTemplateSettings settings = new PeakTransferTemplateSettings();
 		settings.setUseBestTargetOnly(PreferenceSupplier.isTransferUseBestTargetOnly());
 		settings.setDeltaRetentionTimeLeft(PreferenceSupplier.getTransferRetentionTimeMillisecondsLeft());
 		settings.setDeltaRetentionTimeRight(PreferenceSupplier.getTransferRetentionTimeMillisecondsRight());
@@ -97,8 +97,8 @@ public class PeakTransfer extends AbstractPeakDetector implements IPeakDetectorM
 
 		IProcessingInfo processingInfo = super.validate(chromatogramSelection, settings, monitor);
 		if(!processingInfo.hasErrorMessages()) {
-			if(settings instanceof PeakTransferSettings) {
-				PeakTransferSettings peakTransferSettings = (PeakTransferSettings)settings;
+			if(settings instanceof PeakTransferTemplateSettings) {
+				PeakTransferTemplateSettings peakTransferSettings = (PeakTransferTemplateSettings)settings;
 				transferPeaks(chromatogramSelection, peakTransferSettings);
 			} else {
 				processingInfo.addErrorMessage(PeakDetectorSettings.DETECTOR_DESCRIPTION, "The settings instance is wrong.");
@@ -108,7 +108,7 @@ public class PeakTransfer extends AbstractPeakDetector implements IPeakDetectorM
 	}
 
 	@SuppressWarnings("unchecked")
-	private void transferPeaks(IChromatogramSelection<? extends IPeak, ?> chromatogramSelection, PeakTransferSettings peakTransferSettings) {
+	private void transferPeaks(IChromatogramSelection<? extends IPeak, ?> chromatogramSelection, PeakTransferTemplateSettings peakTransferSettings) {
 
 		IChromatogram chromatogram = chromatogramSelection.getChromatogram();
 		List<IPeak> peaks = chromatogram.getPeaks(chromatogramSelection);
@@ -119,7 +119,7 @@ public class PeakTransfer extends AbstractPeakDetector implements IPeakDetectorM
 	}
 
 	@SuppressWarnings("unchecked")
-	private void transferPeaks(List<IPeak> peaks, IChromatogram chromatogramSink, PeakTransferSettings peakTransferSettings) {
+	private void transferPeaks(List<IPeak> peaks, IChromatogram chromatogramSink, PeakTransferTemplateSettings peakTransferSettings) {
 
 		/*
 		 * General Settings
@@ -231,7 +231,7 @@ public class PeakTransfer extends AbstractPeakDetector implements IPeakDetectorM
 		ILibraryInformation libraryInformation = new LibraryInformation(identificationTarget.getLibraryInformation());
 		IComparisonResult comparisonResult = new ComparisonResult(identificationTarget.getComparisonResult());
 		IIdentificationTarget identificationTargetSink = new IdentificationTarget(libraryInformation, comparisonResult);
-		identificationTargetSink.setIdentifier(PeakTransferSettings.DESCRIPTION);
+		identificationTargetSink.setIdentifier(PeakTransferTemplateSettings.DESCRIPTION);
 		return identificationTargetSink;
 	}
 }

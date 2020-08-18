@@ -18,9 +18,9 @@ import org.eclipse.chemclipse.chromatogram.msd.peak.detector.settings.IPeakDetec
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-public class PeakTransferSettings extends AbstractPeakDetectorSettingsMSD implements IPeakDetectorSettingsMSD, IPeakDetectorSettingsCSD {
+public class PeakTransferTemplateSettings extends AbstractPeakDetectorSettingsMSD implements IPeakDetectorSettingsMSD, IPeakDetectorSettingsCSD {
 
-	public static final String DESCRIPTION = "Template Peak Transfer";
+	public static final String DESCRIPTION = "Peak Transfer [Template]";
 	//
 	@JsonProperty(value = "Transfer Best Target Only", defaultValue = "false")
 	@JsonPropertyDescription(value = "If this value is true, only the best target will be transfered.")
@@ -45,8 +45,8 @@ public class PeakTransferSettings extends AbstractPeakDetectorSettingsMSD implem
 	@JsonPropertyDescription(value = "If this value is true, peaks will be adjusted by using the peak purity value.")
 	private boolean useAdjustmentByPurity = true;
 	//
-	@JsonProperty(value = "Optimize Range", defaultValue = "true")
-	@JsonPropertyDescription(value = "If this value is true, the peak model range will be optimized.")
+	@JsonProperty(value = "Optimize Range (VV)", defaultValue = "true")
+	@JsonPropertyDescription(value = "If this value is true, the peak model range will be optimized if VV as a peak type is used.")
 	private boolean optimizeRange = true;
 
 	public boolean isUseBestTargetOnly() {
