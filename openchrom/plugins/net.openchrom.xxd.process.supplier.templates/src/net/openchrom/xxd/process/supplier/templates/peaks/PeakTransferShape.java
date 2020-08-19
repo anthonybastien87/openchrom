@@ -20,6 +20,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.math3.analysis.function.Gaussian;
 import org.eclipse.chemclipse.chromatogram.csd.peak.detector.core.IPeakDetectorCSD;
 import org.eclipse.chemclipse.chromatogram.csd.peak.detector.settings.IPeakDetectorSettingsCSD;
 import org.eclipse.chemclipse.chromatogram.msd.peak.detector.core.IPeakDetectorMSD;
@@ -53,6 +54,7 @@ import org.eclipse.chemclipse.msd.model.core.IChromatogramPeakMSD;
 import org.eclipse.chemclipse.msd.model.core.IScanMSD;
 import org.eclipse.chemclipse.msd.model.core.selection.IChromatogramSelectionMSD;
 import org.eclipse.chemclipse.msd.model.xic.IExtractedIonSignal;
+import org.eclipse.chemclipse.numeric.core.Point;
 import org.eclipse.chemclipse.processing.core.IProcessingInfo;
 import org.eclipse.core.runtime.IProgressMonitor;
 
@@ -147,28 +149,7 @@ public class PeakTransferShape extends AbstractPeakDetector implements IPeakDete
 					 * Gauss
 					 */
 					for(IPeak peak : peakz) {
-						IPeakModel peakModel = peak.getPeakModel();
-						double percentageIntensityPeak = getPercentageIntensity(peak);
-						if(chromatogramSink instanceof IChromatogramCSD) {
-							IChromatogramCSD chromatogramCSD = (IChromatogramCSD)chromatogramSink;
-							int startRetentionTime = peakModel.getStartRetentionTime();
-							int stopRetentionTime = peakModel.getStopRetentionTime();
-							int retentionTime = peakModel.getRetentionTimeAtPeakMaximum();
-							// int delta = Math.max(retentionTime - startRetentionTime, stopRetentionTime - retentionTime);
-							int scanMax = chromatogramCSD.getScanNumber(retentionTime);
-							//
-							if(scanMax > 0 && scanMax <= chromatogramCSD.getNumberOfScans()) {
-								int startScan = scanMax - 10;
-								int stopScan = scanMax + 10;
-								float intensity = getIntensity(chromatogramCSD, startScan, stopScan);
-								intensity *= percentageIntensityPeak;
-								IPeak peakSink = createDefaultGaussPeak(chromatogramCSD, (retentionTime - 2000), (retentionTime + 5000), intensity);
-								if(peakSink != null) {
-									transferTarget(peak, peakSink);
-									((IChromatogram)chromatogramSink).addPeak(peakSink);
-								}
-							}
-						}
+						createGaussianPeak(peak, chromatogramSink);
 					}
 				} else {
 					/*
@@ -189,6 +170,33 @@ public class PeakTransferShape extends AbstractPeakDetector implements IPeakDete
 						double percentageIntensity = percentageIntensityArea * percentageIntensityPeak;
 						transfer(peak, startRetentionTime, stopRetentionTime, percentageIntensity, chromatogramSink, peakTransferSettings);
 					}
+				}
+			}
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private void createGaussianPeak(IPeak peak, IChromatogram chromatogramSink) {
+
+		IPeakModel peakModel = peak.getPeakModel();
+		double percentageIntensityPeak = getPercentageIntensity(peak);
+		if(chromatogramSink instanceof IChromatogramCSD) {
+			IChromatogramCSD chromatogramCSD = (IChromatogramCSD)chromatogramSink;
+			int startRetentionTime = peakModel.getStartRetentionTime();
+			int stopRetentionTime = peakModel.getStopRetentionTime();
+			int scanMax = chromatogramCSD.getScanNumber(peakModel.getRetentionTimeAtPeakMaximum());
+			//
+			if(scanMax > 0 && scanMax <= chromatogramCSD.getNumberOfScans()) {
+				int offset = 7;
+				int startScan = scanMax - offset;
+				int stopScan = scanMax + offset;
+				Point maxPosition = getMaxPosition(chromatogramCSD, startScan, stopScan);
+				int centerRetentionTime = (int)maxPosition.getX();
+				float intensity = (float)(maxPosition.getY() * percentageIntensityPeak);
+				IPeak peakSink = createDefaultGaussPeak(chromatogramCSD, startRetentionTime, centerRetentionTime, stopRetentionTime, intensity);
+				if(peakSink != null) {
+					transferTarget(peak, peakSink);
+					chromatogramSink.addPeak(peakSink);
 				}
 			}
 		}
@@ -387,45 +395,43 @@ public class PeakTransferShape extends AbstractPeakDetector implements IPeakDete
 		return identificationTargetSink;
 	}
 
-	private float getIntensity(IChromatogram<?> chromatogram, int startScan, int stopScan) {
+	private Point getMaxPosition(IChromatogram<?> chromatogram, int startScan, int stopScan) {
 
-		float intensity = Float.MIN_VALUE;
+		int retentionTime = 0;
+		float maxIntensity = Float.MIN_VALUE;
+		//
 		for(int i = startScan; i <= stopScan; i++) {
 			IScan scan = chromatogram.getScan(i);
-			intensity = Math.max(intensity, scan.getTotalSignal());
+			if(scan.getTotalSignal() > maxIntensity) {
+				retentionTime = scan.getRetentionTime();
+				maxIntensity = scan.getTotalSignal();
+			}
 		}
 		//
-		return intensity;
+		return new Point(retentionTime, maxIntensity);
 	}
 
-	public IChromatogramPeakCSD createDefaultGaussPeak(IChromatogramCSD chromatogram, int startRetentionTime, int stopRetentionTime, float intensity) {
+	public IChromatogramPeakCSD createDefaultGaussPeak(IChromatogramCSD chromatogram, int startRetentionTime, int centerRetentionTime, int stopRetentionTime, float intensity) {
 
 		int startScan = chromatogram.getScanNumber(startRetentionTime);
+		int centerScan = chromatogram.getScanNumber(centerRetentionTime);
 		int stopScan = chromatogram.getScanNumber(stopRetentionTime);
-		/*
-		 * Peak maximum
-		 */
-		// float intensity = Float.MIN_VALUE;
-		// for(int i = startScan; i <= stopScan; i++) {
-		// IScan scan = chromatogram.getScan(i);
-		// intensity = Math.max(intensity, scan.getTotalSignal());
-		// }
-		//
 		IScanCSD peakMaximum = new ScanCSD(intensity);
 		/*
 		 * Intensity profile
 		 */
 		IPeakIntensityValues peakIntensityValues = new PeakIntensityValues(intensity);
-		double a = intensity;
-		double j = -5.0d;
-		double iDelta = 0.1d;
+		//
+		double norm = intensity;
+		double mean = centerScan;
+		double sigma = 30.0d; // TODO
+		Gaussian gaussian = new Gaussian(norm, mean, sigma);
 		//
 		for(int i = startScan; i <= stopScan; i++) {
 			IScan scan = chromatogram.getScan(i);
 			int retentionTime = scan.getRetentionTime();
-			float peakIntensity = (float)(a * Math.exp(-j * j / 2) / Math.sqrt(2 * Math.PI));
+			float peakIntensity = (float)gaussian.value(i);
 			peakIntensityValues.addIntensityValue(retentionTime, peakIntensity);
-			j += iDelta;
 		}
 		peakIntensityValues.normalize();
 		//
