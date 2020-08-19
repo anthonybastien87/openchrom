@@ -172,13 +172,24 @@ public class PeakTransfer extends AbstractPeakDetector implements IPeakDetectorM
 		 */
 		List<IPeak> peaksSource = new ArrayList<>();
 		if(peakTransferSettings.isUseIdentifiedPeaksOnly()) {
+			/*
+			 * Add identified peak(s).
+			 */
 			for(IPeak peak : peaks) {
 				if(!peak.getTargets().isEmpty()) {
-					peaksSource.add(peak);
+					if(peak.isActiveForAnalysis()) {
+					}
 				}
 			}
 		} else {
-			peaksSource.addAll(peaks);
+			/*
+			 * Add all peak(s).
+			 */
+			for(IPeak peak : peaks) {
+				if(peak.isActiveForAnalysis()) {
+					peaksSource.add(peak);
+				}
+			}
 		}
 		/*
 		 * Sort by retention time.
@@ -273,22 +284,33 @@ public class PeakTransfer extends AbstractPeakDetector implements IPeakDetectorM
 			/*
 			 * Model peak
 			 */
-			IChromatogramCSD chromatogramCSD = (IChromatogramCSD)chromatogramSink;
-			int deltaRetentionTimeLeft = peakTransferSettings.getDeltaRetentionTimeLeft();
-			int deltaRetentionTimeRight = peakTransferSettings.getDeltaRetentionTimeRight();
-			int startRetentionTime = peakModel.getStartRetentionTime() - deltaRetentionTimeLeft;
-			int stopRetentionTime = peakModel.getStopRetentionTime() + deltaRetentionTimeRight;
-			int offsetRetentionTime = peakTransferSettings.getOffsetRetentionTimePeakMaximum();
-			Point maxPosition = getMaxPosition(chromatogramCSD, peakModel.getRetentionTimeAtPeakMaximum(), offsetRetentionTime);
-			//
-			if(maxPosition.getX() > 0 && maxPosition.getY() > 0) {
-				double sigma = calculateSigma(peakSource);
-				int centerRetentionTime = (int)maxPosition.getX();
-				float intensity = (float)(maxPosition.getY() * percentageIntensity);
-				IPeak peakSink = createDefaultGaussPeak(chromatogramCSD, startRetentionTime, centerRetentionTime, stopRetentionTime, sigma, intensity);
-				if(peakSink != null) {
-					transferTargets(peakSource, peakSink, peakTransferSettings);
-					chromatogramSink.addPeak(peakSink);
+			if(peakModel.getLeading() >= 4.0f || peakModel.getTailing() >= 4.0) {
+				/*
+				 * Probably try to add a Gamma distribution modeled peak.
+				 * https://commons.apache.org/proper/commons-math/userguide/distribution.html
+				 */
+				transfer(peakSource, percentageIntensity, chromatogramSink, peakTransferSettings);
+			} else {
+				/*
+				 * Gaussian Peak
+				 */
+				IChromatogramCSD chromatogramCSD = (IChromatogramCSD)chromatogramSink;
+				int deltaRetentionTimeLeft = peakTransferSettings.getDeltaRetentionTimeLeft();
+				int deltaRetentionTimeRight = peakTransferSettings.getDeltaRetentionTimeRight();
+				int startRetentionTime = peakModel.getStartRetentionTime() - deltaRetentionTimeLeft;
+				int stopRetentionTime = peakModel.getStopRetentionTime() + deltaRetentionTimeRight;
+				int offsetRetentionTime = peakTransferSettings.getOffsetRetentionTimePeakMaximum();
+				Point maxPosition = getMaxPosition(chromatogramCSD, peakModel.getRetentionTimeAtPeakMaximum(), offsetRetentionTime);
+				//
+				if(maxPosition.getX() > 0 && maxPosition.getY() > 0) {
+					double sigma = calculateSigma(peakSource);
+					int centerRetentionTime = (int)maxPosition.getX();
+					float intensity = (float)(maxPosition.getY() * percentageIntensity);
+					IPeak peakSink = createDefaultGaussPeak(chromatogramCSD, startRetentionTime, centerRetentionTime, stopRetentionTime, sigma, intensity);
+					if(peakSink != null) {
+						transferTargets(peakSource, peakSink, peakTransferSettings);
+						chromatogramSink.addPeak(peakSink);
+					}
 				}
 			}
 		} else {
