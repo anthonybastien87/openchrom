@@ -21,7 +21,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 public class PeakTransferShapeSettings extends AbstractPeakDetectorSettingsMSD implements IPeakDetectorSettingsMSD, IPeakDetectorSettingsCSD {
 
-	public static final String DESCRIPTION = "Peak Transfer [Shape]";
+	public static final String DETECTOR_DESCRIPTION = "Gaussian Model";
+	public static final String IDENTIFIER_DESCRIPTION = "Peak Transfer [Shape]";
 	//
 	@JsonProperty(value = "Delta Retention Time Left [ms]", defaultValue = "0")
 	@JsonPropertyDescription(value = "This is the left delta retention time in milliseconds.")

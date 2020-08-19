@@ -146,7 +146,7 @@ public class PeakTransferShape extends AbstractPeakDetector implements IPeakDete
 				boolean createGaussPeaks = true;
 				if(createGaussPeaks) {
 					/*
-					 * Gauss
+					 * Gauss Model
 					 */
 					for(IPeak peak : peakz) {
 						createGaussianPeak(peak, chromatogramSink);
@@ -391,7 +391,7 @@ public class PeakTransferShape extends AbstractPeakDetector implements IPeakDete
 		ILibraryInformation libraryInformation = new LibraryInformation(identificationTarget.getLibraryInformation());
 		IComparisonResult comparisonResult = new ComparisonResult(identificationTarget.getComparisonResult());
 		IIdentificationTarget identificationTargetSink = new IdentificationTarget(libraryInformation, comparisonResult);
-		identificationTargetSink.setIdentifier(PeakTransferShapeSettings.DESCRIPTION);
+		identificationTargetSink.setIdentifier(PeakTransferShapeSettings.IDENTIFIER_DESCRIPTION);
 		return identificationTargetSink;
 	}
 
@@ -436,6 +436,8 @@ public class PeakTransferShape extends AbstractPeakDetector implements IPeakDete
 		peakIntensityValues.normalize();
 		//
 		IPeakModelCSD peakModel = new PeakModelCSD(peakMaximum, peakIntensityValues, 0, 0);
-		return new ChromatogramPeakCSD(peakModel, chromatogram);
+		ChromatogramPeakCSD peak = new ChromatogramPeakCSD(peakModel, chromatogram);
+		peak.setDetectorDescription(PeakTransferShapeSettings.DETECTOR_DESCRIPTION);
+		return peak;
 	}
 }
