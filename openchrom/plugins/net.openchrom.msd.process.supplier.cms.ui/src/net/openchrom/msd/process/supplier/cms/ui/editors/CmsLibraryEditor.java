@@ -25,7 +25,7 @@ import org.eclipse.chemclipse.converter.exceptions.NoChromatogramConverterAvaila
 import org.eclipse.chemclipse.converter.exceptions.NoConverterAvailableException;
 import org.eclipse.chemclipse.logging.core.Logger;
 import org.eclipse.chemclipse.model.exceptions.ChromatogramIsNullException;
-import org.eclipse.chemclipse.model.notifier.ScanUpdateNotifier;
+import org.eclipse.chemclipse.model.notifier.UpdateNotifier;
 import org.eclipse.chemclipse.model.updates.IUpdateListener;
 import org.eclipse.chemclipse.msd.converter.database.DatabaseConverter;
 import org.eclipse.chemclipse.msd.converter.exceptions.NoMassSpectrumConverterAvailableException;
@@ -288,7 +288,7 @@ public class CmsLibraryEditor implements IChemClipseEditor {
 				Object object = cmsLibraryUI.getStructuredSelection().getFirstElement();
 				if(object instanceof IScanMSD) {
 					IScanMSD massSpectrum = (IScanMSD)object;
-					ScanUpdateNotifier.update(massSpectrum);
+					UpdateNotifier.update(massSpectrum);
 				}
 			}
 		});
