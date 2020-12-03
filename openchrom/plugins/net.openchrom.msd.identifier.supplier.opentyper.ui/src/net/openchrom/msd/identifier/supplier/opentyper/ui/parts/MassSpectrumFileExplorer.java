@@ -30,7 +30,7 @@ public class MassSpectrumFileExplorer {
 	@Inject
 	public MassSpectrumFileExplorer(Composite parent) {
 
-		explorerUI = new DataExplorerUI(parent, null, Activator.getDefault().getPreferenceStore());
+		explorerUI = new DataExplorerUI(parent, Activator.getDefault().getPreferenceStore());
 		explorerUI.setSupplierFileIdentifier(Collections.singleton(MassSpectrumSupport.getInstanceEditorSupport()));
 		explorerUI.expandLastDirectoryPath();
 	}
