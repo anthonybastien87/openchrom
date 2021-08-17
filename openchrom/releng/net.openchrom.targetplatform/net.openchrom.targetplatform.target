@@ -8,7 +8,7 @@
 <unit id="net.openchrom.thirdpartylibraries.barcode4j.feature.feature.group" version="2.1.0.v2021"/>
 <unit id="net.openchrom.thirdpartylibraries.javassist.feature.feature.group" version="3.20.0.v2021"/>
 <unit id="net.openchrom.thirdpartylibraries.neuroph.feature.feature.group" version="2.9.2.v2021"/>
-<unit id="net.openchrom.thirdpartylibraries.jcampdx.feature.feature.group" version="0.9.5.v2021"/>
+<unit id="net.openchrom.thirdpartylibraries.jcampdx.feature.feature.group" version="0.0.0"/>
 <unit id="net.openchrom.thirdpartylibraries.biojava.feature.feature.group" version="4.2.4.v2021"/>
 <unit id="net.openchrom.thirdpartylibraries.jhdf5.feature.feature.group" version="14.12.6.v2021"/>
 <unit id="net.openchrom.thirdpartylibraries.jogl.feature.feature.group" version="2.4.0.v2021"/>
